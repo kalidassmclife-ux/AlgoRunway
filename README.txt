@@ -18,8 +18,12 @@ Manual start:
 
 Important:
 - This is a local dashboard starter only.
-- Strategy buttons only change local demo status.
+- Strategy buttons arm or disarm a local demo status; they do not generate automatic signals.
 - No Dhan API is connected.
 - No live prices, broker orders, or real trading are implemented.
+- Paper premiums are entered manually and stored in this browser.
+- Historical Backtest accepts a user-supplied OHLC CSV and supports India, Crypto, and Forex segments.
+- CSV columns required: Date, Open, High, Low, Close. Time, Symbol, and Market are optional.
+- Backtest date filters include both endpoints; the default range is 2010-01-01 through 2026-11-13.
 - Do not add live execution until authentication, order validation, position limits,
   kill switch, duplicate-order protection, logging, and tested risk controls exist.

@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import BacktestPanel from "./backtest-panel";
 
 type Market = "NIFTY" | "SENSEX";
 type OptionType = "CE" | "PE";
@@ -149,6 +150,10 @@ export default function Home() {
   );
 
   const openTrades = todayTrades.filter(
+    (trade) => trade.status === "OPEN"
+  );
+
+  const allOpenTrades = trades.filter(
     (trade) => trade.status === "OPEN"
   );
 
@@ -402,17 +407,14 @@ export default function Home() {
   };
 
   const closeAllTrades = () => {
-    if (openTrades.length === 0) {
+    if (allOpenTrades.length === 0) {
       setMessage("There are no open trades to close.");
       return;
     }
 
     setTrades((previous) =>
       previous.map((trade) => {
-        if (
-          getTradeDay(trade) === todayKey() &&
-          trade.status === "OPEN"
-        ) {
+        if (trade.status === "OPEN") {
           return closeTrade(
             trade,
             trade.currentPrice,
@@ -424,8 +426,8 @@ export default function Home() {
       })
     );
 
-    setMessage("All today's open paper positions have been closed.");
-    addLog("All today's open paper positions manually closed.");
+    setMessage("All open paper positions have been closed.");
+    addLog("All open paper positions manually closed.");
   };
 
   const resetPaperData = () => {
@@ -513,7 +515,13 @@ export default function Home() {
           </div>
         </header>
 
-        <section
+        <nav aria-label="Dashboard sections" style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 18 }}>
+          {[["Overview", "#overview"], ["Paper Trading", "#paper-trading"], ["Backtest", "#backtest"]].map(([label, href]) => (
+            <a key={href} href={href} style={{ color: "#1d4ed8", background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: 7, padding: "9px 13px", textDecoration: "none", fontWeight: 600, fontSize: 13 }}>{label}</a>
+          ))}
+        </nav>
+
+        <section id="overview"
           style={{
             ...panel,
             background: dailyLossLocked ? "#fee2e2" : "#eff6ff",
@@ -567,7 +575,7 @@ export default function Home() {
             },
             {
               label: "Open Positions",
-              value: String(openTrades.length),
+              value: String(allOpenTrades.length),
               color: "#0f172a",
             },
           ].map((item) => (
@@ -660,6 +668,9 @@ export default function Home() {
 
         <section style={panel}>
           <h2 style={{ marginTop: 0 }}>2. Strategy Controls</h2>
+          <p style={{ color: "#64748b", fontSize: 13 }}>
+            Starting a strategy arms its local paper status only. This site has no live feed or strategy signal engine; use the manual paper order form below to simulate a trade.
+          </p>
 
           <div
             style={{
@@ -679,7 +690,7 @@ export default function Home() {
               >
                 <strong>{strategy.name}</strong>
                 <p style={{ color: "#64748b" }}>
-                  Status: {strategy.running ? "Running" : "Stopped"}
+                  Status: {strategy.running ? "Armed · paper only" : "Stopped"}
                 </p>
                 <button
                   style={{
@@ -689,14 +700,14 @@ export default function Home() {
                   }}
                   onClick={() => toggleStrategy(strategy.id)}
                 >
-                  {strategy.running ? "Stop Strategy" : "Start Strategy"}
+                  {strategy.running ? "Disarm Strategy" : "Arm Paper Strategy"}
                 </button>
               </div>
             ))}
           </div>
         </section>
 
-        <section style={panel}>
+        <section id="paper-trading" style={panel}>
           <h2 style={{ marginTop: 0 }}>3. Open New Paper Trade</h2>
 
           <div
@@ -783,8 +794,8 @@ export default function Home() {
         <section style={panel}>
           <h2 style={{ marginTop: 0 }}>4. Open Positions & Price Updates</h2>
 
-          {openTrades.length === 0 ? (
-            <p style={{ color: "#64748b" }}>No open positions today.</p>
+          {allOpenTrades.length === 0 ? (
+            <p style={{ color: "#64748b" }}>No open positions.</p>
           ) : (
             <div style={{ overflowX: "auto" }}>
               <table
@@ -821,7 +832,7 @@ export default function Home() {
                 </thead>
 
                 <tbody>
-                  {openTrades.map((trade) => (
+                  {allOpenTrades.map((trade) => (
                     <tr key={trade.id}>
                       <td style={{ padding: 10 }}>{trade.market}</td>
                       <td style={{ padding: 10 }}>
@@ -895,11 +906,13 @@ export default function Home() {
               marginTop: 14,
             }}
             onClick={closeAllTrades}
-            disabled={openTrades.length === 0}
+            disabled={allOpenTrades.length === 0}
           >
-            Close All Today's Positions
+            Close All Open Positions
           </button>
         </section>
+
+        <BacktestPanel />
 
         <section style={panel}>
           <h2 style={{ marginTop: 0 }}>5. Today's Trade History</h2>
